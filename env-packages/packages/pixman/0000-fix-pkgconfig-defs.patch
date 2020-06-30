@@ -1,0 +1,9 @@
+diff -uNr pixman-0.38.4/pixman-1.pc.in pixman-0.38.4.mod/pixman-1.pc.in
+--- pixman-0.38.4/pixman-1.pc.in	2017-06-26 04:49:19.000000000 +0300
++++ pixman-0.38.4.mod/pixman-1.pc.in	2019-12-14 23:24:49.209295604 +0200
+@@ -8,4 +8,4 @@
+ Version: @PACKAGE_VERSION@
+ Cflags: -I${includedir}/pixman-1
+ Libs: -L${libdir} -lpixman-1
+-
++Libs.private: -L${libdir} -landroid-cpufeatures

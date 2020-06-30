@@ -1,0 +1,225 @@
+diff -uNr qemu-4.2.0/block.c qemu-4.2.0.mod/block.c
+--- qemu-4.2.0/block.c	2019-12-14 23:44:51.761245599 +0200
++++ qemu-4.2.0.mod/block.c	2019-12-15 00:44:24.861153324 +0200
+@@ -602,14 +602,16 @@
+             ? 0 : -GetLastError());
+ #else
+     int fd;
+-    const char *tmpdir;
+-    tmpdir = getenv("TMPDIR");
++    char *tmpdir = getenv("TMPDIR");
++    char *prefixed_tmpdir = android_dynamic_path_prefix("/tmp");
+     if (!tmpdir) {
+-        tmpdir = "@TERMUX_PREFIX@/tmp";
++        tmpdir = prefixed_tmpdir;
+     }
+     if (snprintf(filename, size, "%s/vl.XXXXXX", tmpdir) >= size) {
++        free(prefixed_tmpdir);
+         return -EOVERFLOW;
+     }
++    free(prefixed_tmpdir);
+     fd = mkstemp(filename);
+     if (fd < 0) {
+         return -errno;
+diff -uNr qemu-4.2.0/hw/usb/ccid-card-emulated.c qemu-4.2.0.mod/hw/usb/ccid-card-emulated.c
+--- qemu-4.2.0/hw/usb/ccid-card-emulated.c	2019-12-14 23:46:14.000525536 +0200
++++ qemu-4.2.0.mod/hw/usb/ccid-card-emulated.c	2019-12-15 00:47:14.435950254 +0200
+@@ -444,10 +444,12 @@
+ {
+     char emul_args[200];
+     VCardEmulOptions *options = NULL;
++    char *prefixed_nssdb_path = android_dynamic_path_prefix("/etc/pki/nssdb");
+ 
+     snprintf(emul_args, sizeof(emul_args) - 1, CERTIFICATES_ARGS_TEMPLATE,
+-        card->db ? card->db : "@TERMUX_PREFIX@/etc/pki/nssdb",
++        card->db ? card->db : prefixed_nssdb_path,
+         card->cert1, card->cert2, card->cert3);
++    free(prefixed_nssdb_path);
+     options = vcard_emul_options(emul_args);
+     if (options == NULL) {
+         printf("%s: warning: not using certificates due to"
+diff -uNr qemu-4.2.0/linux-user/syscall.c qemu-4.2.0.mod/linux-user/syscall.c
+--- qemu-4.2.0/linux-user/syscall.c	2019-12-15 00:22:06.238221819 +0200
++++ qemu-4.2.0.mod/linux-user/syscall.c	2019-12-15 00:49:19.038530837 +0200
+@@ -7290,9 +7290,11 @@
+ 
+         /* create temporary file to map stat to */
+         tmpdir = getenv("TMPDIR");
++        char *prefixed_tmpdir = android_dynamic_path_prefix("/tmp");
+         if (!tmpdir)
+-            tmpdir = "@TERMUX_PREFIX@/tmp";
++            tmpdir = prefixed_tmpdir;
+         snprintf(filename, sizeof(filename), "%s/qemu-open.XXXXXX", tmpdir);
++        free(prefixed_tmpdir);
+         fd = mkstemp(filename);
+         if (fd < 0) {
+             return fd;
+diff -uNr qemu-4.2.0/migration/exec.c qemu-4.2.0.mod/migration/exec.c
+--- qemu-4.2.0/migration/exec.c	2019-12-14 23:41:09.156552316 +0200
++++ qemu-4.2.0.mod/migration/exec.c	2019-12-15 00:50:06.107749278 +0200
+@@ -28,7 +28,7 @@
+ void exec_start_outgoing_migration(MigrationState *s, const char *command, Error **errp)
+ {
+     QIOChannel *ioc;
+-    const char *argv[] = { "@TERMUX_PREFIX@/bin/sh", "-c", command, NULL };
++    const char *argv[] = { "/system/bin/sh", "-c", command, NULL };
+ 
+     trace_migration_exec_outgoing(command);
+     ioc = QIO_CHANNEL(qio_channel_command_new_spawn(argv,
+@@ -55,7 +55,7 @@
+ void exec_start_incoming_migration(const char *command, Error **errp)
+ {
+     QIOChannel *ioc;
+-    const char *argv[] = { "@TERMUX_PREFIX@/bin/sh", "-c", command, NULL };
++    const char *argv[] = { "/system/bin/sh", "-c", command, NULL };
+ 
+     trace_migration_exec_incoming(command);
+     ioc = QIO_CHANNEL(qio_channel_command_new_spawn(argv,
+diff -uNr qemu-4.2.0/net/tap.c qemu-4.2.0.mod/net/tap.c
+--- qemu-4.2.0/net/tap.c	2019-12-14 23:47:32.704802757 +0200
++++ qemu-4.2.0.mod/net/tap.c	2019-12-15 00:55:42.965302379 +0200
+@@ -527,7 +527,7 @@
+             *parg++ = helper_cmd;
+             *parg++ = NULL;
+ 
+-            execv("@TERMUX_PREFIX@/bin/sh", args);
++            execv("/system/bin/sh", args);
+             g_free(helper_cmd);
+         } else {
+             /* assume helper is just the executable path name */
+@@ -908,8 +908,10 @@
+             return -1;
+         }
+ 
+-        script = tap->has_script ? tap->script : "@TERMUX_PREFIX@/etc/qemu-ifup";
+-        downscript = tap->has_downscript ? tap->downscript : "@TERMUX_PREFIX@/etc/qemu-ifdown";
++        char *prefixed_tap_up_script = android_dynamic_path_prefix("/etc/qemu-ifup");
++        char *prefixed_tap_down_script = android_dynamic_path_prefix("/etc/qemu-ifdown");
++        script = tap->has_script ? tap->script : prefixed_tap_up_script;
++        downscript = tap->has_downscript ? tap->downscript : prefixed_tap_down_script;
+ 
+         if (tap->has_ifname) {
+             pstrcpy(ifname, sizeof ifname, tap->ifname);
+@@ -936,6 +938,8 @@
+                              i >= 1 ? "no" : script,
+                              i >= 1 ? "no" : downscript,
+                              vhostfdname, vnet_hdr, fd, &err);
++            free(prefixed_tap_up_script);
++            free(prefixed_tap_down_script);
+             if (err) {
+                 error_propagate(errp, err);
+                 close(fd);
+diff -uNr qemu-4.2.0/qemu-nbd.c qemu-4.2.0.mod/qemu-nbd.c
+--- qemu-4.2.0/qemu-nbd.c	2019-12-14 23:41:09.157552319 +0200
++++ qemu-4.2.0.mod/qemu-nbd.c	2019-12-15 01:03:51.206466478 +0200
+@@ -90,7 +90,7 @@
+ "  -p, --port=PORT           port to listen on (default `%d')\n"
+ "  -b, --bind=IFACE          interface to bind to (default `0.0.0.0')\n"
+ "  -k, --socket=PATH         path to the unix socket\n"
+-"                            (default '@TERMUX_PREFIX@/tmp/qemu-nbd-sock-%s')\n"
++"                            (default '/tmp/qnbd-%s')\n"
+ "  -e, --shared=NUM          device can be shared by NUM clients (default '1')\n"
+ "  -t, --persistent          don't exit on the last connection\n"
+ "  -v, --verbose             display extra debugging information\n"
+@@ -1063,8 +1063,10 @@
+     }
+ 
+     if (device != NULL && sockpath == NULL) {
++        char *prefixed_tmpdir_path = android_dynamic_path_prefix("/tmp");
+         sockpath = g_malloc(128);
+-        snprintf(sockpath, 128, "@TERMUX_PREFIX@/tmp/qemu-nbd-sock-%s", basename(device));
++        snprintf(sockpath, 128, "%s/qnbd-%s", prefixed_tmpdir_path, basename(device));
++        free(prefixed_tmpdir_path);
+     }
+ 
+     server = qio_net_listener_new();
+diff -uNr qemu-4.2.0/qemu-options.hx qemu-4.2.0.mod/qemu-options.hx
+--- qemu-4.2.0/qemu-options.hx	2019-12-14 23:41:09.158552322 +0200
++++ qemu-4.2.0.mod/qemu-options.hx	2019-12-15 01:13:18.683110875 +0200
+@@ -2214,8 +2214,8 @@
+     "         [,poll-us=n]\n"
+     "                configure a host TAP network backend with ID 'str'\n"
+     "                connected to a bridge (default=" DEFAULT_BRIDGE_INTERFACE ")\n"
+-    "                use network scripts 'file' (default=@TERMUX_PREFIX@/etc/qemu-ifup)\n"
+-    "                to configure it and 'dfile' (default=@TERMUX_PREFIX@/etc/qemu-ifdown)\n"
++    "                use network scripts 'file' (default=/etc/qemu-ifup)\n"
++    "                to configure it and 'dfile' (default=/etc/qemu-ifdown)\n"
+     "                to deconfigure it\n"
+     "                use '[down]script=no' to disable script execution\n"
+     "                use network helper 'helper' (default=" DEFAULT_BRIDGE_HELPER ") to\n"
+diff -uNr qemu-4.2.0/slirp/src/slirp.c qemu-4.2.0.mod/slirp/src/slirp.c
+--- qemu-4.2.0/slirp/src/slirp.c	2019-12-14 23:50:56.864555426 +0200
++++ qemu-4.2.0.mod/slirp/src/slirp.c	2019-12-15 01:16:13.939336615 +0200
+@@ -128,9 +128,12 @@
+         return 0;
+     }
+     old_stat = *cached_stat;
+-    if (stat("@TERMUX_PREFIX@/etc/resolv.conf", cached_stat) != 0) {
++    char *prefixed_resolvconf_path = android_dynamic_path_prefix("/etc/resolv.conf");
++    if (stat(prefixed_resolvconf_path, cached_stat) != 0) {
++        free(prefixed_resolvconf_path);
+         return -1;
+     }
++    free(prefixed_resolvconf_path);
+     if (cached_stat->st_dev == old_stat.st_dev &&
+         cached_stat->st_ino == old_stat.st_ino &&
+         cached_stat->st_size == old_stat.st_size &&
+@@ -152,9 +155,13 @@
+     void *tmp_addr = alloca(addrlen);
+     unsigned if_index;
+ 
+-    f = fopen("@TERMUX_PREFIX@/etc/resolv.conf", "r");
+-    if (!f)
++    char *prefixed_resolvconf_path = android_dynamic_path_prefix("/etc/resolv.conf");
++    f = fopen(prefixed_resolvconf_path, "r");
++    if (!f) {
++        free(prefixed_resolvconf_path);
+         return -1;
++    }
++    free(prefixed_resolvconf_path);
+ 
+     DEBUG_MISC("IP address of your DNS(s):");
+     while (fgets(buff, 512, f) != NULL) {
+diff -uNr qemu-4.2.0/tcg/tcg.c qemu-4.2.0.mod/tcg/tcg.c
+--- qemu-4.2.0/tcg/tcg.c	2019-12-14 23:48:54.305098365 +0200
++++ qemu-4.2.0.mod/tcg/tcg.c	2019-12-15 01:05:50.113225577 +0200
+@@ -4530,7 +4530,9 @@
+     /* Enable this block to be able to debug the ELF image file creation.
+        One can use readelf, objdump, or other inspection utilities.  */
+     {
+-        FILE *f = fopen("@TERMUX_PREFIX@/tmp/qemu.jit", "w+b");
++        char *qemujit_tmp_file = android_dynamic_path_prefix("/tmp/qemu.jit");
++        FILE *f = fopen(qemujit_tmp_file, "w+b");
++        free(qemujit_tmp_file);
+ 
+         if (f) {
+             if (fwrite(img, img_size, 1, f) != img_size) {
+diff -uNr qemu-4.2.0/util/qemu-sockets.c qemu-4.2.0.mod/util/qemu-sockets.c
+--- qemu-4.2.0/util/qemu-sockets.c	2019-12-14 23:41:09.158552322 +0200
++++ qemu-4.2.0.mod/util/qemu-sockets.c	2019-12-15 01:07:49.777202149 +0200
+@@ -877,8 +877,10 @@
+         path = saddr->path;
+     } else {
+         const char *tmpdir = getenv("TMPDIR");
+-        tmpdir = tmpdir ? tmpdir : "@TERMUX_PREFIX@/tmp";
++        char *prefixed_tmpdir = android_dynamic_path_prefix("/tmp");
++        tmpdir = tmpdir ? tmpdir : prefixed_tmpdir;
+         path = pathbuf = g_strdup_printf("%s/qemu-socket-XXXXXX", tmpdir);
++        free(prefixed_tmpdir);
+     }
+ 
+     pathlen = strlen(path);
+diff -uNr qemu-4.2.0/vl.c qemu-4.2.0.mod/vl.c
+--- qemu-4.2.0/vl.c	2019-12-12 20:20:48.000000000 +0200
++++ qemu-4.2.0.mod/vl.c	2019-12-15 01:12:03.298928950 +0200
+@@ -2811,7 +2811,9 @@
+ {
+     int ret;
+ 
+-    ret = qemu_read_config_file(CONFIG_QEMU_CONFDIR "/qemu.conf");
++    char *prefixed_qemuconf_path = android_dynamic_path_prefix("/etc/qemu.conf");
++    ret = qemu_read_config_file(prefixed_qemuconf_path);
++    free(prefixed_qemuconf_path);
+     if (ret < 0 && ret != -ENOENT) {
+         return ret;
+     }

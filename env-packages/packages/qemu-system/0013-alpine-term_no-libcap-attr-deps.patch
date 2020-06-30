@@ -1,0 +1,16 @@
+Special patch used by https://github.com/xeffyr/alpine-term.
+============================================================
+diff -uNr qemu-4.2.0/configure qemu-4.2.0.mod/configure
+--- qemu-4.2.0/configure	2019-12-15 00:00:37.129852320 +0200
++++ qemu-4.2.0.mod/configure	2019-12-15 00:28:10.060179067 +0200
+@@ -6207,9 +6207,8 @@
+ fi
+ if test "$softmmu" = yes ; then
+   if test "$linux" = yes; then
+-    if test "$virtfs" != no && test "$cap" = yes && test "$attr" = yes ; then
++    if test "$virtfs" != no; then
+       virtfs=yes
+-      tools="$tools fsdev/virtfs-proxy-helper\$(EXESUF)"
+     else
+       if test "$virtfs" = yes; then
+         error_exit "VirtFS requires libcap devel and libattr devel"
