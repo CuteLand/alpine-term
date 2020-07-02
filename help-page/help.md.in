@@ -96,9 +96,9 @@ part of screen.
 
 It contains few additional elements:
 
- 1. The list of sessions: the first one is QEMU monitor and the last
-    four sessions are serial consoles (ttyS1-ttyS3). Click on a session
-    to open.
+ 1. The list of sessions: the first one is [QEMU monitor](#qemu-monitor)
+    and the last four sessions are serial consoles (ttyS1-ttyS3). Click
+    on a session to open.
  2. The button to toggle visibility of a touch keyboard.
     <br>Long press will toggle the [extra keys row](#extra-keys-row) (3).
 
@@ -244,7 +244,8 @@ Its console can be accessed through the first tab on the [navigation drawer](#na
 |`screendump <file.ppm>`                          |Create a PPM screenshot of the display and save to the specified file.|
 |`change vnc 127.0.0.1:1`                         |Start the VNC server on 127.0.0.1:5901.|
 |`change vnc 127.0.0.1:1,password`                |Start the VNC server on 127.0.0.1:5901 with password authentication.|
-|`change vnc password`                            |Set the VNC password.                |
+|`change vnc none`                                |Stop the VNC server.             |
+|`change vnc password`                            |Set the VNC password.            |
 |`dump-guest-memory <file>`                       |Dump memory of the virtual machine into file.|
 |`gdbserver tcp::4444`                            |Start the GDB server listening on TCP 0.0.0.0:4444.|
 |`gdbserver none`                                 |Stop the GDB server.             |
