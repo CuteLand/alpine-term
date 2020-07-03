@@ -64,7 +64,7 @@ Alpine Term is provided in 2 variants:
 
  - Ultimate - large, many utilities are available out-of-box. Close to configuration what I'm actually using.
 
-   Download: [alpine-term-v11.0-ultimate.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.0/alpine-term-v11.0-ultimate.apk)
+   Download: [alpine-term-v11.0-ultimate-r1.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.0/alpine-term-v11.0-ultimate-r1.apk)
 
 Android OS version 7.0 or higher is required. As for storage space - QEMU disk
 partition is limited to 4 GB, so consider that as minimal free disk space requirement
