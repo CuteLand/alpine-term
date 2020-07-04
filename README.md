@@ -60,11 +60,11 @@ Alpine Term is provided in 2 variants:
 
  - Standard - small, only basic utilities are pre-installed in the VM image.
 
-   Download: [alpine-term-v11.0-standard.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.0/alpine-term-v11.0-standard.apk)
+   Download: [alpine-term-v11.1-standard.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.1/alpine-term-v11.1-standard.apk)
 
  - Ultimate - large, many utilities are available out-of-box. Close to configuration what I'm actually using.
 
-   Download: [alpine-term-v11.0-ultimate-r1.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.0/alpine-term-v11.0-ultimate-r1.apk)
+   Download: [alpine-term-v11.1-ultimate.apk](https://github.com/xeffyr/alpine-term/releases/download/v11.1/alpine-term-v11.1-ultimate.apk)
 
 Android OS version 7.0 or higher is required. As for storage space - QEMU disk
 partition is limited to 4 GB, so consider that as minimal free disk space requirement
@@ -78,8 +78,8 @@ hardware.
 
 Following pre-built QEMU images are available:
 
-* Arch Linux (561M): [archlinux-alpine-term-r2020.07.02.qcow2](https://github.com/xeffyr/alpine-term/releases/download/v11.0/archlinux-alpine-term-r2020.07.02.qcow2)
-* Debian 10 (670M): [debian10-alpine-term-r2020.07.01-1.qcow2](https://github.com/xeffyr/alpine-term/releases/download/v11.0/debian10-alpine-term-r2020.07.01-1.qcow2)
+* Arch Linux (561M): [archlinux-alpine-term-r2020.07.02.qcow2](https://github.com/xeffyr/alpine-term/releases/download/v11.1/archlinux-alpine-term-r2020.07.02.qcow2)
+* Debian 10 (670M): [debian10-alpine-term-r2020.07.01-1.qcow2](https://github.com/xeffyr/alpine-term/releases/download/v11.1/debian10-alpine-term-r2020.07.01-1.qcow2)
 
 To use one of these images, download it, rename to `hdd.qcow2` and place
 exactly at this location:
